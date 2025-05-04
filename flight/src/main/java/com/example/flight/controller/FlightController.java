@@ -15,17 +15,17 @@ public class FlightController {
     @Autowired
     private FlightService flightService;
 
-    @PostMapping
+    @PostMapping("/createflight")
     public FlightResponse createFlight(@RequestBody FlightRequest request) {
         return flightService.createFlight(request);
     }
 
-    @GetMapping
+    @GetMapping("/getallflight")
     public List<FlightResponse> getAllFlights() {
         return flightService.getAllFlights();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/getbyid/{id}")
     public FlightResponse getFlightById(@PathVariable Long id) {
         return flightService.getFlightById(id);
     }
