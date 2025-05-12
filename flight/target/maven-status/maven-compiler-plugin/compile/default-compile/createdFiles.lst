@@ -3,5 +3,6 @@ com\example\flight\controller\FlightController.class
 com\example\flight\FlightApplication.class
 com\example\flight\dto\FlightRequest.class
 com\example\flight\entity\Flight.class
+com\example\flight\kafka\FlightKafkaConsumer.class
 com\example\flight\dto\FlightResponse.class
 com\example\flight\service\FlightService.class
