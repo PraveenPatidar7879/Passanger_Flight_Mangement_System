@@ -3,31 +3,29 @@ package com.example.passenger.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
-
-import java.security.Key;
-import java.security.SecureRandom;
-import java.util.Base64;
+import com.example.passenger.config.JwtConfig;
+import lombok.RequiredArgsConstructor;
+import javax.crypto.SecretKey;
 import java.util.Date;
+import java.nio.charset.StandardCharsets;
 
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
-    private Key key;
-    private final long EXPIRATION = 86400000L; // 1 day in ms
+    private final JwtConfig jwtConfig;
+    private SecretKey key;
 
     @jakarta.annotation.PostConstruct
     public void init() {
-        // Generate a 256-bit (32-byte) secret key using SecureRandom
-        byte[] secretBytes = new byte[32];
-        new SecureRandom().nextBytes(secretBytes);
-        key = Keys.hmacShaKeyFor(secretBytes);
-        System.out.println("JWT Secret Key Generated: " + Base64.getEncoder().encodeToString(secretBytes)); // for dev/test only
+        // Generate key from the configured secret
+        key = Keys.hmacShaKeyFor(jwtConfig.getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtConfig.getExpirationTime()))
                 .signWith(key)
                 .compact();
     }

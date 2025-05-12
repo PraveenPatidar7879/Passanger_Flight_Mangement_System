@@ -4,11 +4,13 @@ import com.example.passenger.dto.*;
 import com.example.passenger.entity.Passenger;
 import com.example.passenger.repository.PassengerRepository;
 import com.example.passenger.security.JwtUtil;
+import com.example.passenger.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +20,10 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public void register(RegisterRequest request) {
+        if (repository.findByUsername(request.getUsername()).isPresent()) {
+            throw new ApiException("Username already exists", HttpStatus.BAD_REQUEST);
+        }
+        
         Passenger p = new Passenger();
         p.setUsername(request.getUsername());
         p.setPassword(encoder.encode(request.getPassword()));
@@ -28,27 +34,23 @@ public class AuthService {
 
     public String login(LoginRequest request) {
         Passenger p = repository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid UserName"));
+                .orElseThrow(() -> new ApiException("Invalid username", HttpStatus.UNAUTHORIZED));
 
         if (!encoder.matches(request.getPassword(), p.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new ApiException("Invalid password", HttpStatus.UNAUTHORIZED);
         }
 
         return jwtUtil.generateToken(p.getUsername());
     }
 
-   
     public PassengerProfileDto getProfile() {
-        // 1) get username from the SecurityContext (populated by JwtAuthFilter)
         String username = SecurityContextHolder.getContext()
-                              .getAuthentication()
-                              .getName();
+                .getAuthentication()
+                .getName();
 
-        // 2) load the Passenger
         Passenger p = repository.findByUsername(username)
-                         .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
 
-        // 3) map to DTO
         return new PassengerProfileDto(p.getUsername(), p.getEmail(), p.getFullName());
     }
 }
